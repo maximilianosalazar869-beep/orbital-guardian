@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#05090e">
+  <meta name="description" content="ORBITAL GUARDIAN: explorador geoespacial de detecciones NASA FIRMS y condiciones meteorológicas Open-Meteo.">
+  <title>ORBITAL GUARDIAN · Centro de control</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./estilos.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
+  <script defer src="https://unpkg.com/globe.gl@2.46.2/dist/globe.gl.min.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-fire" viewBox="0 0 24 24"><path d="M13 2c2 6-4 7-1 11 2-1 3-3 3-5 5 4 7 7 5 11-3 6-14 5-16-1-1-4 2-7 4-10-1 5 1 6 2 6-2-5 3-7 3-12Z"/></symbol>
+    <symbol id="i-temp" viewBox="0 0 24 24"><path d="M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0Z"/><path d="M12 8v10"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2S4 12 4 16a8 8 0 0 0 16 0C20 12 12 2 12 2Z"/></symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24"><path d="M3 8h12a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h5a3 3 0 1 1-3 3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5h14M5 17.5h14"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><ellipse cx="12" cy="12" rx="12" ry="4" transform="rotate(-35 12 12)"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  </svg>
+  <a class="skip-link" href="#search-input">Ir a búsqueda global</a>
+  <header class="topbar">
+    <a class="brand" href="./index.html" aria-label="Orbital Guardian, inicio">
+      <svg class="brand-mark" viewBox="0 0 80 70" aria-hidden="true"><defs><linearGradient id="brand-gradient"><stop stop-color="#38e88b"/><stop offset="1" stop-color="#00a955"/></linearGradient></defs><circle cx="39" cy="34" r="24" fill="none" stroke="url(#brand-gradient)" stroke-width="2"/><path d="m26 14 9 3 1 6-6 5-1 8-7 2-6-9 4-9m21-9 6 8-4 5 5 5 8-1 6 7-6 8-3 14-7 1-2-13-10-5 1-9 5-6-6-5Z" fill="url(#brand-gradient)"/><ellipse cx="39" cy="34" rx="38" ry="11" transform="rotate(-32 39 34)" fill="none" stroke="#19cb73" stroke-width="2"/><path d="m63 8 11 1-4 10-3-6Z" fill="#e9fff3"/></svg>
+      <span><span class="brand-title">ORBITAL <strong>GUARDIAN</strong></span><span class="brand-subtitle">Sistema Global Inteligente de Riesgos</span></span>
+    </a>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <button class="nav-button active" data-view="explorar" aria-current="page">Explorar</button>
+      <button class="nav-button" data-view="analisis">Análisis</button>
+      <button class="nav-button" data-view="alertas">Alertas <span id="nav-alert-count" class="nav-count">—</span></button>
+      <button class="nav-button" data-view="historial">Historial</button>
+      <button class="nav-button ai-nav" data-view="asistente">✧ Asistente IA</button>
+    </nav>
+    <div class="system-block"><span id="system-status" class="status-label"><i class="status-dot"></i><span id="system-text">INICIANDO SISTEMA</span></span><time id="utc-clock" class="mono">--:--:-- UTC</time></div>
+    <button id="about-button" class="avatar" aria-label="Acerca del proyecto"><svg class="icon"><use href="#i-user"/></svg></button>
+  </header>
+
+  <main id="view-explorar" class="dashboard app-view" aria-label="Explorar">
+    <aside class="sidebar" aria-label="Análisis de ubicación">
+      <section class="panel search-panel">
+        <h2>Búsqueda global</h2>
+        <form id="search-form" role="search" class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search-input" type="search" placeholder="Ciudad, país o coordenadas…" aria-label="Buscar ciudad o latitud, longitud" autocomplete="off" maxlength="140"><button id="search-submit" type="submit" aria-label="Buscar">↵</button></form>
+        <div id="search-results" class="search-results" aria-live="polite" hidden></div>
+      </section>
+      <section class="panel location-panel">
+        <div class="section-heading"><h2>Ubicación seleccionada</h2><span class="tiny-tag">EN OBSERVACIÓN</span></div>
+        <div class="selected-location"><svg class="icon green"><use href="#i-pin"/></svg><div><h3 id="location-name">Amazonas, Brasil</h3><p id="location-coords" class="mono muted">-3.4653, -62.2159</p></div><button id="refresh-weather" class="icon-button" aria-label="Actualizar condiciones" title="Actualizar condiciones">↻</button></div>
+        <div class="weather-grid" aria-live="polite">
+          <div><p><svg class="icon red"><use href="#i-temp"/></svg><strong id="temperature">—</strong></p><span>Temperatura</span></div>
+          <div><p><svg class="icon blue filled"><use href="#i-drop"/></svg><strong id="humidity">—</strong></p><span>Humedad</span></div>
+          <div><p><svg class="icon blue"><use href="#i-wind"/></svg><strong id="wind">—</strong></p><span>Viento</span></div>
+        </div>
+        <p id="weather-status" class="micro muted" role="status">Esperando datos meteorológicos…</p>
+        <div id="risk-alert" class="risk-alert" data-level="unknown" role="status"><svg class="icon filled"><use href="#i-fire"/></svg><div><span id="risk-eyebrow">ANÁLISIS CIENTÍFICO</span><h3 id="risk-title">Conectando fuentes</h3><p id="risk-description">Magnitudes físicas pendientes</p></div></div>
+        <dl id="physical-values" class="physical-values"><div><dt>VPD</dt><dd id="physical-vpd">— kPa</dd></div><div><dt>FFWI · meteorológico</dt><dd id="physical-ffwi">— / 100</dd></div><div><dt>Σ FRP · 150 km</dt><dd id="physical-frp">— MW</dd></div><div><dt>Viento · origen</dt><dd id="physical-wind">—</dd></div></dl>
+        <p id="place-info" class="micro muted">Municipio: pendiente de consulta.</p>
+        <p class="micro muted"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap · ODbL</a></p>
+        <section class="prediction-card" aria-labelledby="prediction-heading"><h3 id="prediction-heading"><span>Predicción</span> (próximas 6 horas)</h3><p id="prediction-text">Esperando pronóstico horario…</p><div class="prediction-chart-wrap"><canvas id="prediction-chart" role="img" aria-label="Proyección del índice de riesgo a seis horas"></canvas></div></section>
+        <p id="nearby-info" class="micro muted">La cercanía se calcula con todos los focos válidos del CSV.</p>
+        <div class="section-heading alerts-heading"><h2>Últimas alertas</h2><button id="all-alerts" class="text-button">Ver todas</button></div>
+        <p class="micro muted">Detecciones del archivo · mayor intensidad</p>
+        <div id="alert-list" class="alert-list"><p class="empty-state">Leyendo NASA FIRMS…</p></div>
+        <button id="method-button" class="method-link">ⓘ Ecuaciones, fuentes y límites del modelo</button>
+      </section>
+    </aside>
+
+    <section id="globe-scene" class="globe-scene" aria-label="Explorador terrestre 3D">
+      <div id="globe" tabindex="0" role="region" aria-label="Globo 3D: arrastra para rotar, usa la rueda para acercar o haz clic para analizar. También puedes buscar coordenadas."></div>
+      <div class="scene-vignette" aria-hidden="true"></div>
+      <div class="scene-topline"><span class="live-pill"><i class="status-dot"></i> OBSERVACIÓN TERRESTRE</span><button id="patrol-button" class="patrol-button" aria-pressed="false">◎ Patrullaje Orbital</button></div>
+      <div class="map-toolbar" role="group" aria-label="Controles del globo">
+        <button id="home-view" class="map-button active" title="Vista inicial" aria-label="Vista inicial"><svg class="icon"><use href="#i-target"/></svg></button>
+        <button id="locate-me" class="map-button" title="Analizar mi ubicación" aria-label="Analizar mi ubicación"><svg class="icon"><use href="#i-pin"/></svg></button>
+        <button id="rotate-globe" class="map-button" title="Rotación automática" aria-label="Rotación automática" aria-pressed="false"><svg class="icon"><use href="#i-orbit"/></svg></button>
+        <button id="fullscreen" class="map-button" title="Pantalla completa" aria-label="Pantalla completa"><svg class="icon"><use href="#i-expand"/></svg></button>
+      </div>
+      <div id="globe-loading" class="globe-loading" role="status"><span class="loader-orbit"></span><strong>ESTABLECIENDO ENLACE ORBITAL</strong><span>Cargando la Tierra y sus capas…</span></div>
+      <div id="globe-error" class="globe-error" role="alert" hidden></div>
+      <section class="panel layers-panel" aria-label="Capas de visualización">
+        <button id="layers-toggle" class="layers-heading" aria-expanded="true" aria-controls="layers-content"><span>Capas</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <div id="layers-content">
+          <label class="layer-row"><span class="layer-preview base"></span><span>Mapa base<small>Retícula geográfica</small></span><input id="layer-base" class="switch" type="checkbox" aria-label="Retícula geográfica"></label>
+          <label class="layer-row"><span class="layer-preview satellite"></span><span>Satélite <small>(NASA)</small></span><input id="layer-satellite" class="switch" type="checkbox" checked aria-label="Textura satelital NASA"></label>
+          <label class="layer-row"><span class="layer-preview terrain"></span><span>Relieve</span><input id="layer-terrain" class="switch" type="checkbox" checked aria-label="Relieve topográfico"></label>
+          <label class="layer-row"><span class="layer-preview heat"></span><span>Temperatura<small>Puntos consultados</small></span><input id="layer-temperature" class="switch" type="checkbox" aria-label="Temperatura en ubicaciones consultadas"></label>
+          <label class="layer-row"><span class="layer-preview fires"></span><span>Incendios activos<small>(NASA FIRMS · CSV)</small></span><input id="layer-fires" class="switch" type="checkbox" checked aria-label="Detecciones NASA FIRMS"></label>
+          <label class="layer-row"><span class="layer-preview rain"></span><span>Precipitación<small>Puntos consultados</small></span><input id="layer-rain" class="switch" type="checkbox" aria-label="Precipitación en ubicaciones consultadas"></label>
+          <div class="opacity-control"><label for="layer-opacity">Opacidad de datos</label><div><input id="layer-opacity" type="range" min="0" max="100" value="85"><output id="opacity-value" for="layer-opacity">85%</output></div></div>
+          <p id="layer-note" class="micro muted">Los puntos rojos son anomalías térmicas detectadas; no confirman incendios forestales.</p>
+        </div>
+      </section>
+      <div class="map-caption"><span class="mono">NASA FIRMS <span class="green">/</span> <strong id="fire-count">—</strong> FOCOS</span><span id="map-coordinates" class="mono">-3.4653°, -62.2159°</span></div>
+      <div class="map-legend"><span><i class="legend-dot fire-dot"></i> Anomalía térmica</span><span><i class="legend-dot blue-dot"></i> Ubicación seleccionada</span></div>
+      <div class="zoom-controls" role="group" aria-label="Zoom"><button id="zoom-in" aria-label="Acercar">+</button><button id="zoom-out" aria-label="Alejar">−</button></div>
+      <span class="scene-credit">NASA Visible Earth · referencia, no imagen en vivo</span>
+      <div id="wind-legend" class="wind-legend" hidden>Vector de transporte hipotético a 6 / 12 h · viento constante, NO perímetro de incendio</div>
+    </section>
+
+    <section id="analysis-panel" class="bottom-panels" aria-label="Indicadores de análisis">
+      <article class="panel conditions-panel"><div class="section-heading"><h2>Gráfico de condiciones</h2><span class="tiny-tag">PRÓXIMAS 6 H · UTC</span></div><div class="chart-legend"><span><i class="legend-dot red-dot"></i>Temperatura °C</span><span><i class="legend-dot blue-dot"></i>Humedad %</span><span><i class="legend-dot yellow-dot"></i>Riesgo %</span></div><div class="conditions-chart-wrap"><canvas id="conditions-chart" role="img" aria-label="Condiciones horarias: temperatura en grados Celsius, humedad en porcentaje e índice de peligro de 0 a 100"></canvas></div></article>
+      <article class="panel gauge-panel"><h2>Índice de peligro · 0–100</h2><div class="gauge"><svg viewBox="0 0 240 145" role="img" aria-label="Escala de riesgo de cero a cien"><defs><linearGradient id="gauge-gradient" x1="0" x2="1"><stop offset="0" stop-color="#00bf63"/><stop offset=".45" stop-color="#eab308"/><stop offset=".72" stop-color="#ff7300"/><stop offset="1" stop-color="#ef263d"/></linearGradient></defs><path d="M30 120 A90 90 0 0 1 210 120" fill="none" stroke="#17212c" stroke-width="19" stroke-linecap="round"/><path d="M30 120 A90 90 0 0 1 210 120" fill="none" stroke="url(#gauge-gradient)" stroke-width="17" stroke-linecap="round"/><circle id="gauge-marker" cx="30" cy="120" r="6" fill="#fff" stroke="#071018" stroke-width="3" visibility="hidden"/></svg><div class="gauge-value"><strong id="global-risk">—</strong><span id="global-risk-label">SIN DATOS</span></div><span class="gauge-min mono">0</span><span class="gauge-max mono">100</span></div><p id="global-scope" class="micro muted">Índice local FFWI + VPD + FIRMS; no es probabilidad.</p></article>
+      <article class="panel sources-panel"><h2>Fuente de datos</h2><a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank" rel="noopener noreferrer" class="source"><span class="source-logo nasa-logo">NASA</span><span><strong>NASA FIRMS</strong><small>Incendios y anomalías térmicas</small></span><span class="external-arrow">↗</span></a><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" class="source"><span class="source-logo meteo-logo"><svg class="icon"><use href="#i-wind"/></svg></span><span><strong>Open-Meteo</strong><small>Modelos meteorológicos · CC BY 4.0</small></span><span class="external-arrow">↗</span></a><a href="https://visibleearth.nasa.gov/" target="_blank" rel="noopener noreferrer" class="source"><span class="source-logo earth-logo"><svg class="icon"><use href="#i-globe"/></svg></span><span><strong>NASA Visible Earth</strong><small>Imagen terrestre de referencia</small></span><span class="external-arrow">↗</span></a><p id="csv-status" class="source-footnote mono" role="status">CSV: esperando lectura…</p></article>
+    </section>
+  </main>
+
+  <main id="view-analisis" class="mission-page app-view" aria-labelledby="lab-title" hidden>
+    <header class="page-heading"><div><p class="eyebrow">02 / LABORATORIO CIENTÍFICO</p><h1 id="lab-title" tabindex="-1">Datos antes que suposiciones.</h1><p>Estadísticas del archivo cargado y cálculo físico reproducible.</p></div><button id="reload-dataset" class="action-button">↻ Recargar CSV</button></header>
+    <div id="dataset-stats" class="stat-grid" aria-live="polite"><p>Esperando el archivo NASA FIRMS…</p></div>
+    <div class="lab-grid">
+      <section class="panel science-panel"><h2>Detecciones por continente</h2><p id="continent-status" class="micro muted">Esperando cartografía Natural Earth…</p><div class="continent-chart"><canvas id="continent-chart" aria-label="Número de detecciones por continente" role="img"></canvas></div><div id="continent-table" class="micro"></div></section>
+      <section class="panel science-panel"><div class="section-heading"><h2>Simulador físico</h2><span class="tiny-tag">ESCENARIO HIPOTÉTICO</span></div><p class="muted">Los controles no modifican observaciones reales. FRP fijo: suma del contexto seleccionado.</p>
+        <label class="sim-control" for="sim-temperature">Temperatura <output id="sim-temperature-value">30 °C</output><input id="sim-temperature" type="range" min="-40" max="60" step="0.5" value="30"></label>
+        <label class="sim-control" for="sim-humidity">Humedad relativa <output id="sim-humidity-value">40 %</output><input id="sim-humidity" type="range" min="0" max="100" step="1" value="40"></label>
+        <label class="sim-control" for="sim-wind">Viento a 10 m <output id="sim-wind-value">20 km/h</output><input id="sim-wind" type="range" min="0" max="150" step="1" value="20"></label>
+        <label class="sim-control" for="sim-distance">Distancia al foco <output id="sim-distance-value">25 km</output><input id="sim-distance" type="range" min="0" max="500" step="1" value="25"></label>
+        <div id="simulation-output" class="simulation-output" aria-live="polite"></div><button id="sim-use-current" class="text-button">Usar las condiciones seleccionadas</button>
+      </section>
+      <section class="panel science-panel full-span"><div class="section-heading"><h2>Pronóstico horario verificable</h2><span class="tiny-tag">OPEN-METEO · UTC</span></div><p class="muted">Seis registros horarios futuros exactos, sin interpolar ni rellenar ausencias. FIRMS permanece fijo.</p><div id="forecast-table" class="table-scroll"><p>Selecciona una ubicación.</p></div></section>
+    </div>
+  </main>
+
+  <main id="view-alertas" class="mission-page app-view" aria-labelledby="crisis-title" hidden>
+    <header class="page-heading"><div><p class="eyebrow">03 / SALA DE CRISIS</p><h1 id="crisis-title" tabindex="-1">Prioridad por potencia radiativa.</h1><p>Las 20 detecciones de mayor FRP del archivo. No son necesariamente 20 incendios distintos ni activos ahora.</p></div><span class="live-pill"><i class="status-dot"></i> NASA FIRMS / CSV</span></header>
+    <p id="crisis-summary" class="notice-strip">Esperando datos…</p><div id="crisis-list" class="crisis-grid"></div>
+  </main>
+
+  <main id="view-historial" class="mission-page app-view" aria-labelledby="history-title" hidden>
+    <header class="page-heading"><div><p class="eyebrow">04 / BITÁCORA DE MISIÓN</p><h1 id="history-title" tabindex="-1">Trazabilidad y metodología.</h1><p>Consultas reales de esta pestaña. Las métricas se conservan como instantáneas, no se reescriben al cambiar de ubicación.</p></div><button id="history-clear" class="action-button">Vaciar bitácora</button></header>
+    <div class="lab-grid"><section class="panel science-panel"><h2>Registro de consultas</h2><div id="session-history"></div></section><section class="panel science-panel"><h2>Ficha del dataset</h2><div id="dataset-provenance"></div><h2 class="spaced-heading">Métodos y fuentes</h2><div id="methodology-sheet" class="methodology-sheet"></div></section></div>
+  </main>
+
+  <main id="view-asistente" class="mission-page app-view" aria-labelledby="assistant-title" hidden>
+    <header class="page-heading"><div><p class="eyebrow">05 / COPILOTO TÁCTICO</p><h1 id="assistant-title" tabindex="-1">Asistente de misión.</h1><p>Motor experto local, determinista y auditable. No es un LLM ni un sistema oficial de emergencias.</p></div><button id="assistant-settings" class="icon-button" aria-label="Configuración del asistente">⚙</button></header>
+    <div class="assistant-layout"><aside class="panel science-panel"><h2>Contexto de misión</h2><div id="assistant-context" aria-live="polite"></div><p class="notice-strip">Sin transmisión a un proveedor de IA. Cada respuesta conserva el contexto y las fechas usados.</p><h2>Consultas rápidas</h2><div class="quick-prompts"><button data-prompt="Evaluar riesgo de evacuación">Evaluar riesgo de evacuación ↗</button><button data-prompt="Analizar propagación por viento">Analizar propagación por viento ↗</button><button data-prompt="Generar comunicado de alerta">Generar comunicado de alerta ↗</button></div></aside>
+      <section class="panel chat-panel" aria-label="Chat del asistente"><div class="chat-topline"><span class="status-dot"></span> GUARDIAN / MOTOR EXPERTO LOCAL <span class="tiny-tag">SIN DATOS SINTÉTICOS</span></div><div id="chat-messages" class="chat-messages" role="log" aria-live="polite"><article class="chat-message assistant"><strong>GUARDIAN</strong><p>Selecciona un foco en Explorar. Analizaré sus condiciones físicas y señalaré qué conclusiones no permiten los datos disponibles.</p></article></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-input">Consulta al asistente</label><textarea id="chat-input" rows="2" maxlength="2000" placeholder="Pregunta sobre VPD, FRP, viento, pronóstico o metodología…" required></textarea><button type="submit" class="action-button">Enviar ↑</button></form></section></div>
+  </main>
+
+  <section id="print-report" hidden aria-label="Reporte técnico imprimible"></section>
+
+  <footer class="footer"><span class="mono">ORBITAL GUARDIAN <span class="muted">v1.0</span></span><span>Desarrollado para un futuro más seguro <span class="green">◉</span><small> NASA SPACE APPS CHALLENGE · PROTOTIPO</small></span><span id="data-status" class="mono"><i class="status-dot"></i> CONECTANDO FUENTES</span></footer>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title">Centro de control</h2><button id="close-dialog" class="icon-button" aria-label="Cerrar ventana">×</button></div><div id="dialog-content"></div></dialog>
+  <noscript><div class="noscript">Activa JavaScript para cargar el globo y analizar los datos.</div></noscript>
+</body>
+</html>
